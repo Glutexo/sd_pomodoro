@@ -8,19 +8,19 @@
 
 <body>
 <script>
+    let TARGET_HARDWARE_AND_SOFTWARE = 0;
+    let LONG_PRESS_MS = 500;
+
     var websocket = null;
     var pluginUUID = null;
 
-    var DestinationEnum = Object.freeze({"HARDWARE_AND_SOFTWARE": 0, "HARDWARE_ONLY": 1, "SOFTWARE_ONLY": 2})
-    let LONG_PRESS_MS = 500;
-
-    var timer;
+    var keyPressTimer;
 
     var counterAction = {
         type: "com.glutexo.pomodoro.action",
 
         onKeyDown: function (context, settings, coordinates, userDesiredState) {
-            timer = setTimeout(function () {
+            keyPressTimer = setTimeout(function () {
                 var updatedSettings = {};
                 updatedSettings["keyPressCounter"] = -1;
 
@@ -31,7 +31,7 @@
 
         onKeyUp: function (context, settings, coordinates, userDesiredState) {
 
-            clearTimeout(timer);
+            clearTimeout(keyPressTimer);
 
             var keyPressCounter = 0;
             if (settings != null && settings.hasOwnProperty('keyPressCounter')) {
@@ -64,7 +64,7 @@
                 "context": context,
                 "payload": {
                     "title": "" + keyPressCounter,
-                    "target": DestinationEnum.HARDWARE_AND_SOFTWARE
+                    "target": TARGET_HARDWARE_AND_SOFTWARE
                 }
             };
 
