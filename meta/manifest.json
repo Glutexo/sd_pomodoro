@@ -1,0 +1,40 @@
+{
+  "Actions": [
+    {
+      "Icon": "icon", 
+      "Name": "Pomodoro", 
+      "States": [
+        {
+          "Image": "icon",
+          "TitleAlignment": "middle",
+          "FontSize": "16"
+        }
+      ], 
+      "SupportedInMultiActions": false,
+      "Tooltip": "Got tomatoes?", 
+      "UUID": "com.glutexo.pomodoro.action"
+    }
+  ], 
+  "SDKVersion": 2,
+  "Author": "Glutexo", 
+  "CodePath": "main.html", 
+  "Description": "Boost your productivity with the world’s most favorite tomato countdown.", 
+  "Name": "Pomodoro", 
+  "Icon": "icon", 
+  "URL": "https://github.com/Glutexo/sd_pomodoro", 
+  "Version": "0.1",
+  "OS": [
+    {
+        "Platform": "mac",
+        "MinimumVersion" : "10.11"
+    },
+    {
+        "Platform": "windows", 
+        "MinimumVersion" : "10"
+    }
+  ],
+  "Software": 
+    {
+        "MinimumVersion" : "4.1"
+    }
+}

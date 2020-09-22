@@ -1,0 +1,8 @@
+{
+  "Description": "Boost your productivity with the world’s most favorite tomato countdown.", 
+  "Name": "Pomodoro", 
+  "com.glutexo.pomodoro.action": {
+    "Name": "Counter", 
+    "Tooltip": "Got tomatoes?"
+  }
+}
