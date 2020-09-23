@@ -10,6 +10,8 @@
 <script>
     const TARGET_HARDWARE_AND_SOFTWARE = 0;
     const LONG_PRESS_MS = 500;
+    const POMODORO_TICK_MS = 1000;
+    const POMODORO_INITIAL_SECONDS = 60;
 
     const EVENT_KEY_DOWN = "keyDown"
     const EVENT_KEY_UP = "keyUp"
@@ -18,7 +20,8 @@
     const actions = {
         onKeyDown: function (context, settings, coordinates, userDesiredState) {
             keyPressTimer = setTimeout(function () {
-                _setPomodoroTimer(context, 0)
+                clearInterval(pomodoroTimer)
+                _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
                 longPress = true;
             }, LONG_PRESS_MS);
         },
@@ -31,21 +34,15 @@
                 return
             }
 
-            let pomodoroTimer = 0;
-            if (settings != null && settings.hasOwnProperty("pomodoroTimer")) {
-                pomodoroTimer = settings["pomodoroTimer"];
-            }
-            pomodoroTimer++;
-
-            _setPomodoroTimer(context, pomodoroTimer)
+            _togglePomodoroTimer(context, settings)
         },
 
         onWillAppear: function (context, settings, coordinates) {
-            let pomodoroTimer = 60;
-            if (settings != null && settings.hasOwnProperty("pomodoroTimer")) {
-                pomodoroTimer = settings["pomodoroTimer"];
+            pomodoroSeconds = POMODORO_INITIAL_SECONDS;
+            if (settings != null && settings.hasOwnProperty("pomodoroSeconds")) {
+                pomodoroSeconds = settings["pomodoroSeconds"];
             }
-            _setPomodoroTimer(context, pomodoroTimer)
+            _setPomodoroSeconds(context, pomodoroSeconds)
         },
     }
 
@@ -55,10 +52,30 @@
     let keyPressTimer;
     let longPress = false;
 
-    function _setPomodoroTimer (context, pomodoroTimer) {
-        let settings = {"pomodoroTimer": pomodoroTimer};
+    let pomodoroTimer;
+    let pomodoroSeconds;
+
+    function _pomodoroTick(context, settings) {
+        pomodoroSeconds--;
+        _setPomodoroSeconds(context, pomodoroSeconds)
+    }
+
+    function _togglePomodoroTimer(context, settings) {
+        function __pomodoroTick() {
+            _pomodoroTick(context, settings);
+        }
+
+        if (pomodoroTimer) {
+            clearInterval(pomodoroTimer);
+        } else {
+            pomodoroTimer = setInterval(__pomodoroTick, POMODORO_TICK_MS)
+        }
+    }
+
+    function _setPomodoroSeconds(context, pomodoroSeconds) {
+        let settings = {"pomodoroSeconds": pomodoroSeconds};
         _setSettings(context, settings);
-        _setTitle(context, pomodoroTimer);
+        _setTitle(context, pomodoroSeconds);
     }
 
     function _setSettings(context, settings) {
@@ -72,7 +89,7 @@
         websocket.send(json);
     }
 
-    function _setTitle (context, title) {
+    function _setTitle(context, title) {
         let data = {
             "event": "setTitle",
             "context": context,
