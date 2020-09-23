@@ -20,82 +20,74 @@
 
         onKeyDown: function (context, settings, coordinates, userDesiredState) {
             keyPressTimer = setTimeout(function () {
-                var updatedSettings = {};
-                updatedSettings["keyPressCounter"] = -1;
-
-                this._setSettings(context, updatedSettings);
-                this._setTitle(context, 0);
+                _setPomodoroTimer(context, 0)
+                longPress = true;
             }, LONG_PRESS_MS);
         },
 
         onKeyUp: function (context, settings, coordinates, userDesiredState) {
-
             clearTimeout(keyPressTimer);
 
-            var keyPressCounter = 0;
-            if (settings != null && settings.hasOwnProperty('keyPressCounter')) {
-                keyPressCounter = settings["keyPressCounter"];
+            if (longPress) {
+                longPress = false;
+                return
             }
 
-            keyPressCounter++;
+            let pomodoroTimer = 0;
+            if (settings != null && settings.hasOwnProperty("pomodoroTimer")) {
+                pomodoroTimer = settings["pomodoroTimer"];
+            }
+            pomodoroTimer++;
 
-            updatedSettings = {};
-            updatedSettings["keyPressCounter"] = keyPressCounter;
-
-            this._setSettings(context, updatedSettings);
-            this._setTitle(context, keyPressCounter);
+            _setPomodoroTimer(context, pomodoroTimer)
         },
 
         onWillAppear: function (context, settings, coordinates) {
-
-            var keyPressCounter = 60;
-            if (settings != null && settings.hasOwnProperty('keyPressCounter')) {
-                keyPressCounter = settings["keyPressCounter"];
+            let pomodoroTimer = 60;
+            if (settings != null && settings.hasOwnProperty("pomodoroTimer")) {
+                pomodoroTimer = settings["pomodoroTimer"];
             }
-
-            updatedSettings = {};
-            updatedSettings["keyPressCounter"] = keyPressCounter;
-
-            this._setSettings(context, updatedSettings);
-            this._setTitle(context, keyPressCounter);
+            _setPomodoroTimer(context, pomodoroTimer)
         },
-
-        _setPomodoroTimer: function (seconds) {
-            let settings = {"pomodoroTimer": seconds};
-
-            this._setSettings(context, settings);
-            this._setTitle(context, keyPressCounter);
-
-        },
-
-        _setTitle: function (context, keyPressCounter) {
-            let json = {
-                "event": "setTitle",
-                "context": context,
-                "payload": {
-                    "title": "" + keyPressCounter,
-                    "target": TARGET_HARDWARE_AND_SOFTWARE
-                }
-            };
-
-            websocket.send(JSON.stringify(json));
-        },
-
-        _setSettings: function (context, settings) {
-            let json = {
-                "event": "setSettings",
-                "context": context,
-                "payload": settings
-            };
-
-            websocket.send(JSON.stringify(json));
-        }
-    };
+    }
 
     let websocket = null;
     let pluginUUID = null;
 
     let keyPressTimer;
+    let longPress = false;
+
+    function _setPomodoroTimer (context, pomodoroTimer) {
+        let settings = {"pomodoroTimer": pomodoroTimer};
+        _setSettings(context, settings);
+        _setTitle(context, pomodoroTimer);
+    }
+
+    function _setSettings(context, settings) {
+        let data = {
+            "event": "setSettings",
+            "context": context,
+            "payload": settings
+        };
+        let json = JSON.stringify(data);
+
+        websocket.send(json);
+    }
+
+    function _setTitle (context, title) {
+        let data = {
+            "event": "setTitle",
+            "context": context,
+            "payload": {
+                "title": "" + title,
+                "target": TARGET_HARDWARE_AND_SOFTWARE
+            }
+        };
+        let json = JSON.stringify(data)
+
+        websocket.send(json);
+    }
+
 
     function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo) {
         pluginUUID = inPluginUUID
