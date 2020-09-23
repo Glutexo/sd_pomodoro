@@ -15,9 +15,7 @@
     const EVENT_KEY_UP = "keyUp"
     const EVENT_WILL_APPEAR = "willAppear"
 
-    const counterAction = {
-        type: "com.glutexo.pomodoro.action",
-
+    const actions = {
         onKeyDown: function (context, settings, coordinates, userDesiredState) {
             keyPressTimer = setTimeout(function () {
                 _setPomodoroTimer(context, 0)
@@ -114,21 +112,21 @@
 
             if (received_event_data["event"] === EVENT_KEY_DOWN) {
                 var jsonPayload = received_event_data["payload"];
-                counterAction.onKeyDown(
+                actions.onKeyDown(
                     received_event_data["context"],
                     received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
                     received_event_data["payload"]["userDesiredState"],
                 );
             } else if (received_event_data["event"] === EVENT_KEY_UP) {
-                counterAction.onKeyUp(
+                actions.onKeyUp(
                     received_event_data["context"],
                     received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
                     received_event_data["payload"]["userDesiredState"],
                 );
             } else if (received_event_data["event"] === EVENT_WILL_APPEAR) {
-                counterAction.onWillAppear(
+                actions.onWillAppear(
                     received_event_data["context"],
                     received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
