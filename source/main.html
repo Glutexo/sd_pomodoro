@@ -11,6 +11,10 @@
     let TARGET_HARDWARE_AND_SOFTWARE = 0;
     let LONG_PRESS_MS = 500;
 
+    let EVENT_KEY_DOWN = "keyDown"
+    let EVENT_KEY_UP = "keyUp"
+    let EVENT_WILL_APPEAR = "willAppear"
+
     var websocket = null;
     var pluginUUID = null;
 
@@ -24,8 +28,8 @@
                 var updatedSettings = {};
                 updatedSettings["keyPressCounter"] = -1;
 
-                counterAction.SetSettings(context, updatedSettings);
-                counterAction.SetTitle(context, 0);
+                counterAction._setSettings(context, updatedSettings);
+                counterAction._setTitle(context, 0);
             }, LONG_PRESS_MS);
         },
 
@@ -43,23 +47,34 @@
             updatedSettings = {};
             updatedSettings["keyPressCounter"] = keyPressCounter;
 
-            this.SetSettings(context, updatedSettings);
-
-            this.SetTitle(context, keyPressCounter);
+            this._setSettings(context, updatedSettings);
+            this._setTitle(context, keyPressCounter);
         },
 
         onWillAppear: function (context, settings, coordinates) {
 
-            var keyPressCounter = 0;
+            var keyPressCounter = 60;
             if (settings != null && settings.hasOwnProperty('keyPressCounter')) {
                 keyPressCounter = settings["keyPressCounter"];
             }
 
-            this.SetTitle(context, keyPressCounter);
+            updatedSettings = {};
+            updatedSettings["keyPressCounter"] = keyPressCounter;
+
+            this._setSettings(context, updatedSettings);
+            this._setTitle(context, keyPressCounter);
         },
 
-        SetTitle: function (context, keyPressCounter) {
-            var json = {
+        _setPomodoroTimer: function (seconds) {
+            let settings = {"pomodoroTimer": seconds};
+
+            this._setSettings(context, settings);
+            this._setTitle(context, keyPressCounter);
+
+        },
+
+        _setTitle: function (context, keyPressCounter) {
+            let json = {
                 "event": "setTitle",
                 "context": context,
                 "payload": {
@@ -71,8 +86,8 @@
             websocket.send(JSON.stringify(json));
         },
 
-        SetSettings: function (context, settings) {
-            var json = {
+        _setSettings: function (context, settings) {
+            let json = {
                 "event": "setSettings",
                 "context": context,
                 "payload": settings
@@ -89,50 +104,50 @@
         websocket = new WebSocket("ws://127.0.0.1:" + inPort);
 
         function registerPlugin(inPluginUUID) {
-            var json = {
+            let registration = {
                 "event": inRegisterEvent,
                 "uuid": inPluginUUID
-            };
-
-            websocket.send(JSON.stringify(json));
-        };
+            }, json = JSON.stringify(registration);
+            websocket.send(json);
+        }
 
         websocket.onopen = function () {
             // WebSocket is connected, send message
             registerPlugin(pluginUUID);
         };
 
-        websocket.onmessage = function (evt) {
+        websocket.onmessage = function (received_event) {
             // Received message from Stream Deck
-            var jsonObj = JSON.parse(evt.data);
-            var event = jsonObj['event'];
-            var action = jsonObj['action'];
-            var context = jsonObj['context'];
+            let received_event_data = JSON.parse(received_event.data);
 
-            if (event == "keyDown") {
-                var jsonPayload = jsonObj['payload'];
-                var settings = jsonPayload['settings'];
-                var coordinates = jsonPayload['coordinates'];
-                var userDesiredState = jsonPayload['userDesiredState'];
-                counterAction.onKeyDown(context, settings, coordinates, userDesiredState);
-            } else if (event == "keyUp") {
-                var jsonPayload = jsonObj['payload'];
-                var settings = jsonPayload['settings'];
-                var coordinates = jsonPayload['coordinates'];
-                var userDesiredState = jsonPayload['userDesiredState'];
-                counterAction.onKeyUp(context, settings, coordinates, userDesiredState);
-            } else if (event == "willAppear") {
-                var jsonPayload = jsonObj['payload'];
-                var settings = jsonPayload['settings'];
-                var coordinates = jsonPayload['coordinates'];
-                counterAction.onWillAppear(context, settings, coordinates);
+            if (received_event_data["event"] === EVENT_KEY_DOWN) {
+                var jsonPayload = received_event_data["payload"];
+                counterAction.onKeyDown(
+                    received_event_data["context"],
+                    received_event_data["payload"]["settings"],
+                    received_event_data["payload"]["coordinates"],
+                    received_event_data["payload"]["userDesiredState"],
+                );
+            } else if (received_event_data["event"] === EVENT_KEY_UP) {
+                counterAction.onKeyUp(
+                    received_event_data["context"],
+                    received_event_data["payload"]["settings"],
+                    received_event_data["payload"]["coordinates"],
+                    received_event_data["payload"]["userDesiredState"],
+                );
+            } else if (received_event_data["event"] === EVENT_WILL_APPEAR) {
+                counterAction.onWillAppear(
+                    received_event_data["context"],
+                    received_event_data["payload"]["settings"],
+                    received_event_data["payload"]["coordinates"],
+                );
             }
         };
 
         websocket.onclose = function () {
             // Websocket is closed
         };
-    };
+    }
 </script>
 </body>
 </html>
