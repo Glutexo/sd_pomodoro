@@ -18,89 +18,88 @@
     const EVENT_WILL_APPEAR = "willAppear"
 
     const actions = {
-        onKeyDown: function (context, settings, coordinates, userDesiredState) {
+        onKeyDown: function (context, coordinates, userDesiredState) {
             keyPressTimer = setTimeout(function () {
-                clearInterval(pomodoroTimer)
-                _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
                 longPress = true;
+                clearInterval(pomodoroTimer)
+                pomodoroTimer = null;
+                _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
             }, LONG_PRESS_MS);
         },
 
-        onKeyUp: function (context, settings, coordinates, userDesiredState) {
+        onKeyUp: function (context, coordinates, userDesiredState) {
             clearTimeout(keyPressTimer);
+            keyPressTimer = null;
 
             if (longPress) {
                 longPress = false;
                 return
             }
 
-            _togglePomodoroTimer(context, settings)
+            _togglePomodoroTimer(context)
         },
 
-        onWillAppear: function (context, settings, coordinates) {
-            pomodoroSeconds = POMODORO_INITIAL_SECONDS;
-            if (settings != null && settings.hasOwnProperty("pomodoroSeconds")) {
-                pomodoroSeconds = settings["pomodoroSeconds"];
-            }
-            _setPomodoroSeconds(context, pomodoroSeconds)
+        onWillAppear: function (context, coordinates) {
+            _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
         },
     }
 
-    let websocket = null;
+    let web_socket = null;
     let pluginUUID = null;
 
-    let keyPressTimer;
+    let keyPressTimer = null;
     let longPress = false;
 
-    let pomodoroTimer;
-    let pomodoroSeconds;
+    let pomodoroTimer = null;
+    let settings = null;
 
-    function _pomodoroTick(context, settings) {
-        pomodoroSeconds--;
-        _setPomodoroSeconds(context, pomodoroSeconds)
+    function _pomodoroTick(context) {
+        _setPomodoroSeconds(context, settings["pomodoroSeconds"] - 1)
     }
 
-    function _togglePomodoroTimer(context, settings) {
+    function _togglePomodoroTimer(context) {
         function __pomodoroTick() {
-            _pomodoroTick(context, settings);
+            _pomodoroTick(context);
         }
 
         if (pomodoroTimer) {
             clearInterval(pomodoroTimer);
+            pomodoroTimer = null;
         } else {
             pomodoroTimer = setInterval(__pomodoroTick, POMODORO_TICK_MS)
         }
     }
 
     function _setPomodoroSeconds(context, pomodoroSeconds) {
-        let settings = {"pomodoroSeconds": pomodoroSeconds};
+        if (settings == null) {
+            settings = {}
+        }
+        settings["pomodoroSeconds"] = pomodoroSeconds
         _setSettings(context, settings);
         _setTitle(context, pomodoroSeconds);
     }
 
     function _setSettings(context, settings) {
-        let data = {
-            "event": "setSettings",
-            "context": context,
-            "payload": settings
-        };
-        let json = JSON.stringify(data);
-
-        websocket.send(json);
+        _sendEvent("setSettings", context, settings)
     }
 
     function _setTitle(context, title) {
-        let data = {
-            "event": "setTitle",
-            "context": context,
-            "payload": {
-                "title": "" + title,
-                "target": TARGET_HARDWARE_AND_SOFTWARE
-            }
-        };
-        let json = JSON.stringify(data)
+        const payload = {
+            "title": "" + title,
+            "target": TARGET_HARDWARE_AND_SOFTWARE
+        }
+        _sendEvent("setTitle", context, payload)
+    }
 
-        websocket.send(json);
+
+    function _sendEvent(event, context, payload) {
+        const data = {
+            "event": event,
+            "context": context,
+            "payload": payload
+        };
+        const json = JSON.stringify(data)
+        web_socket.send(json);
     }
 
 
@@ -108,50 +107,49 @@
         pluginUUID = inPluginUUID
 
         // Open the web socket
-        websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+        web_socket = new WebSocket("ws://127.0.0.1:" + inPort);
 
         function registerPlugin(inPluginUUID) {
-            let registration = {
+            const registration = {
                 "event": inRegisterEvent,
                 "uuid": inPluginUUID
             }, json = JSON.stringify(registration);
-            websocket.send(json);
+            web_socket.send(json);
         }
 
-        websocket.onopen = function () {
+        web_socket.onopen = function () {
             // WebSocket is connected, send message
             registerPlugin(pluginUUID);
         };
 
-        websocket.onmessage = function (received_event) {
+        web_socket.onmessage = function (received_event) {
             // Received message from Stream Deck
             let received_event_data = JSON.parse(received_event.data);
 
             if (received_event_data["event"] === EVENT_KEY_DOWN) {
-                var jsonPayload = received_event_data["payload"];
+                settings = received_event_data["payload"]["settings"]
                 actions.onKeyDown(
                     received_event_data["context"],
-                    received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
                     received_event_data["payload"]["userDesiredState"],
                 );
             } else if (received_event_data["event"] === EVENT_KEY_UP) {
+                settings = received_event_data["payload"]["settings"]
                 actions.onKeyUp(
                     received_event_data["context"],
-                    received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
                     received_event_data["payload"]["userDesiredState"],
                 );
             } else if (received_event_data["event"] === EVENT_WILL_APPEAR) {
+                settings = received_event_data["payload"]["settings"]
                 actions.onWillAppear(
                     received_event_data["context"],
-                    received_event_data["payload"]["settings"],
                     received_event_data["payload"]["coordinates"],
                 );
             }
         };
 
-        websocket.onclose = function () {
+        web_socket.onclose = function () {
             // Websocket is closed
         };
     }
