@@ -1,158 +1,16 @@
 <!DOCTYPE HTML>
 <html>
 
-<head>
-    <title>Pomodoro</title>
-    <meta charset="utf-8"/>
-</head>
+    <head>
+        <title>Pomodoro</title>
+        <meta charset="utf-8"/>
+    </head>
 
-<body>
-<script>
-    const TARGET_HARDWARE_AND_SOFTWARE = 0;
-    const LONG_PRESS_MS = 500;
-    const POMODORO_TICK_MS = 1000;
-    const POMODORO_INITIAL_SECONDS = 60;
-
-    const EVENT_KEY_DOWN = "keyDown"
-    const EVENT_KEY_UP = "keyUp"
-    const EVENT_WILL_APPEAR = "willAppear"
-
-    const actions = {
-        onKeyDown: function (context, coordinates, userDesiredState) {
-            keyPressTimer = setTimeout(function () {
-                longPress = true;
-                clearInterval(pomodoroTimer)
-                pomodoroTimer = null;
-                _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
-            }, LONG_PRESS_MS);
-        },
-
-        onKeyUp: function (context, coordinates, userDesiredState) {
-            clearTimeout(keyPressTimer);
-            keyPressTimer = null;
-
-            if (longPress) {
-                longPress = false;
-                return
-            }
-
-            _togglePomodoroTimer(context)
-        },
-
-        onWillAppear: function (context, coordinates) {
-            _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
-        },
-    }
-
-    let web_socket = null;
-    let pluginUUID = null;
-
-    let keyPressTimer = null;
-    let longPress = false;
-
-    let pomodoroTimer = null;
-    let settings = null;
-
-    function _pomodoroTick(context) {
-        _setPomodoroSeconds(context, settings["pomodoroSeconds"] - 1)
-    }
-
-    function _togglePomodoroTimer(context) {
-        function __pomodoroTick() {
-            _pomodoroTick(context);
-        }
-
-        if (pomodoroTimer) {
-            clearInterval(pomodoroTimer);
-            pomodoroTimer = null;
-        } else {
-            pomodoroTimer = setInterval(__pomodoroTick, POMODORO_TICK_MS)
-        }
-    }
-
-    function _setPomodoroSeconds(context, pomodoroSeconds) {
-        if (settings == null) {
-            settings = {}
-        }
-        settings["pomodoroSeconds"] = pomodoroSeconds
-        _setSettings(context, settings);
-        _setTitle(context, pomodoroSeconds);
-    }
-
-    function _setSettings(context, settings) {
-        _sendEvent("setSettings", context, settings)
-    }
-
-    function _setTitle(context, title) {
-        const payload = {
-            "title": "" + title,
-            "target": TARGET_HARDWARE_AND_SOFTWARE
-        }
-        _sendEvent("setTitle", context, payload)
-    }
-
-
-    function _sendEvent(event, context, payload) {
-        const data = {
-            "event": event,
-            "context": context,
-            "payload": payload
-        };
-        const json = JSON.stringify(data)
-        web_socket.send(json);
-    }
-
-
-    function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo) {
-        pluginUUID = inPluginUUID
-
-        // Open the web socket
-        web_socket = new WebSocket("ws://127.0.0.1:" + inPort);
-
-        function registerPlugin(inPluginUUID) {
-            const registration = {
-                "event": inRegisterEvent,
-                "uuid": inPluginUUID
-            }, json = JSON.stringify(registration);
-            web_socket.send(json);
-        }
-
-        web_socket.onopen = function () {
-            // WebSocket is connected, send message
-            registerPlugin(pluginUUID);
-        };
-
-        web_socket.onmessage = function (received_event) {
-            // Received message from Stream Deck
-            let received_event_data = JSON.parse(received_event.data);
-
-            if (received_event_data["event"] === EVENT_KEY_DOWN) {
-                settings = received_event_data["payload"]["settings"]
-                actions.onKeyDown(
-                    received_event_data["context"],
-                    received_event_data["payload"]["coordinates"],
-                    received_event_data["payload"]["userDesiredState"],
-                );
-            } else if (received_event_data["event"] === EVENT_KEY_UP) {
-                settings = received_event_data["payload"]["settings"]
-                actions.onKeyUp(
-                    received_event_data["context"],
-                    received_event_data["payload"]["coordinates"],
-                    received_event_data["payload"]["userDesiredState"],
-                );
-            } else if (received_event_data["event"] === EVENT_WILL_APPEAR) {
-                settings = received_event_data["payload"]["settings"]
-                actions.onWillAppear(
-                    received_event_data["context"],
-                    received_event_data["payload"]["coordinates"],
-                );
-            }
-        };
-
-        web_socket.onclose = function () {
-            // Websocket is closed
-        };
-    }
-</script>
-</body>
+    <body>
+    <script type="text/javascript" src="main.js"></script>
+    <script type="text/javascript" src="web_socket.js"></script>
+    <script type="text/javascript">
+        window.registerStreamDeckConnect(window.pomodoroOnMessage);
+    </script>
+    </body>
 </html>
