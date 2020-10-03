@@ -10,7 +10,9 @@
     <script type="text/javascript" src="main.js"></script>
     <script type="text/javascript" src="web_socket.js"></script>
     <script type="text/javascript">
-        window.registerStreamDeckConnect(window.pomodoroOnMessage);
+        (function() {
+            window.registerStreamDeck(window.pomodoroOnMessage);
+        })();
     </script>
     </body>
 </html>

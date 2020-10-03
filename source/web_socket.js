@@ -1,26 +1,26 @@
 (function() {
-    window.registerStreamDeckConnect = function(onMessage) {
-        window.connectElgatoStreamDeckSocket = function(inPort, inPluginUUID, inRegisterEvent, inInfo) {
-            const webSocket = new WebSocket("ws://127.0.0.1:" + inPort);
+    window.registerStreamDeck = function(onMessage) {
+        window.connectElgatoStreamDeckSocket = function(port, pluginUUID, event, info) {
+            function connectWebSocket(inPort) {
+                const webSocket = new WebSocket("ws://127.0.0.1:" + inPort);
+                return {
+                    bindOpen: function(event, pluginUUID) {
+                        const payload = {"event": event, "uuid": pluginUUID}
+                        const json = JSON.stringify(payload)
+                        webSocket.onopen = () => { webSocket.send(json); };
+                    },
+                    bindMessage: function(onMessage) {
+                        webSocket.onmessage = (event) => {
+                            const eventData = JSON.parse(event.data);
+                            onMessage(webSocket, eventData)
+                        };
+                    }
+                };
+            }
 
-            webSocket.onopen = function() {
-                const registration = {
-                    "event": inRegisterEvent,
-                    "uuid": inPluginUUID
-                }
-                const json = JSON.stringify(registration);
-                webSocket.send(json);
-            };
-
-            webSocket.onmessage = function (event) {
-                // Received message from Stream Deck
-                const eventData = JSON.parse(event.data);
-                onMessage(webSocket, eventData)
-            };
-
-            webSocket.onclose = function() {
-                // Websocket is closed
-            };
+            const webSocket = connectWebSocket(port)
+            webSocket.bindOpen(event, pluginUUID)
+            webSocket.bindMessage(onMessage)
         };
     }
 })();
