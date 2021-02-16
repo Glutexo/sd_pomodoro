@@ -4,36 +4,33 @@
     const POMODORO_TICK_MS = 1000;
     const POMODORO_INITIAL_SECONDS = 60;
 
-    const EVENT_KEY_DOWN = "keyDown"
-    const EVENT_KEY_UP = "keyUp"
-    const EVENT_WILL_APPEAR = "willAppear"
+    const EVENT_KEY_DOWN = "keyDown";
+    const EVENT_KEY_UP = "keyUp";
+    const EVENT_WILL_APPEAR = "willAppear";
 
-    const actions = {
-        onKeyDown: (context, coordinates, userDesiredState) => {
-            keyPressTimer = setTimeout(function () {
-                longPress = true;
-                clearInterval(pomodoroTimer)
-                pomodoroTimer = null;
-                _setPomodoroSeconds(context, POMODORO_INITIAL_SECONDS)
-            }, LONG_PRESS_MS);
-        },
+    const actions = {};
+    actions[EVENT_KEY_DOWN] = (sendEvent) => {
+        keyPressTimer = setTimeout(function () {
+            longPress = true;
+            clearInterval(pomodoroTimer)
+            pomodoroTimer = null;
+            _setPomodoroSeconds(sendEvent, POMODORO_INITIAL_SECONDS)
+        }, LONG_PRESS_MS);
+    };
+    actions[EVENT_KEY_UP] = (sendEvent) => {
+        clearTimeout(keyPressTimer);
+        keyPressTimer = null;
 
-        onKeyUp: (send, context, coordinates, userDesiredState) => {
-            clearTimeout(keyPressTimer);
-            keyPressTimer = null;
+        if (longPress) {
+            longPress = false;
+            return
+        }
 
-            if (longPress) {
-                longPress = false;
-                return
-            }
-
-            _togglePomodoroTimer(send, context)
-        },
-
-        onWillAppear: (send, context, coordinates) => {
-            _setPomodoroSeconds(send, context, POMODORO_INITIAL_SECONDS)
-        },
-    }
+        _togglePomodoroTimer(sendEvent)
+    };
+    actions[EVENT_WILL_APPEAR] = (sendEvent) => {
+        _setPomodoroSeconds(sendEvent, POMODORO_INITIAL_SECONDS)
+    };
 
     let keyPressTimer = null;
     let longPress = false;
@@ -41,13 +38,13 @@
     let pomodoroTimer = null;
     let settings = null;
 
-    function _pomodoroTick(send, context) {
-        _setPomodoroSeconds(send, context, settings["pomodoroSeconds"] - 1)
+    function _pomodoroTick(sendEvent) {
+        _setPomodoroSeconds(sendEvent, settings["pomodoroSeconds"] - 1)
     }
 
-    function _togglePomodoroTimer(send, context) {
+    function _togglePomodoroTimer(sendEvent) {
         function __pomodoroTick() {
-            _pomodoroTick(send, context);
+            _pomodoroTick(sendEvent);
         }
 
         if (pomodoroTimer) {
@@ -58,60 +55,38 @@
         }
     }
 
-    function _setPomodoroSeconds(send, context, pomodoroSeconds) {
-        if (settings == null) {
-            settings = {}
-        }
-        settings["pomodoroSeconds"] = pomodoroSeconds
-        _setSettings(send, context, settings);
-        _setTitle(send, context, pomodoroSeconds);
+    function _setPomodoroSeconds(sendEvent, pomodoroSeconds) {
+        settings = {"pomodoroSeconds": pomodoroSeconds}
+        _setSettings(sendEvent, settings);
+        _setTitle(sendEvent, pomodoroSeconds);
     }
 
-    function _setSettings(send, context, settings) {
-        _sendEvent(send, "setSettings", context, settings)
+    function _setSettings(sendEvent, settings) {
+        sendEvent("setSettings", settings)
     }
 
-    function _setTitle(send, context, title) {
+    function _setTitle(sendEvent, title) {
         const payload = {
-            "title": "" + title,
+            "title": `${title}`,
             "target": TARGET_HARDWARE_AND_SOFTWARE
         }
-        _sendEvent(send, "setTitle", context, payload)
+        sendEvent("setTitle", payload)
     }
 
+    window.pomodoroOnMessage = function(webSocketSendEvent, event) {
+        function sendEvent(eventType, payload) {
+            const data = {
+                "context": event["context"],
+                "event": eventType,
+                "payload": payload
+            };
+            webSocketSendEvent(data);
+        }
 
-    function _sendEvent(send, event, context, payload) {
-        const data = {
-            "event": event,
-            "context": context,
-            "payload": payload
-        };
-        send(data);
-    }
-
-    window.pomodoroOnMessage = function(send, event) {
-        if (event["event"] === EVENT_KEY_DOWN) {
-            settings = event["payload"]["settings"]
-            actions.onKeyDown(
-                event["context"],
-                event["payload"]["coordinates"],
-                event["payload"]["userDesiredState"],
-            );
-        } else if (event["event"] === EVENT_KEY_UP) {
-            settings = event["payload"]["settings"]
-            actions.onKeyUp(
-                send,
-                event["context"],
-                event["payload"]["coordinates"],
-                event["payload"]["userDesiredState"],
-            );
-        } else if (event["event"] === EVENT_WILL_APPEAR) {
-            settings = event["payload"]["settings"]
-            actions.onWillAppear(
-                send,
-                event["context"],
-                event["payload"]["coordinates"],
-            );
+        const eventType = event["event"],
+            action = actions[eventType];
+        if (action) {
+            action(sendEvent);
         }
     }
 })();
