@@ -9,7 +9,7 @@
     const EVENT_WILL_APPEAR = "willAppear"
 
     const actions = {
-        onKeyDown: function(context, coordinates, userDesiredState) {
+        onKeyDown: (context, coordinates, userDesiredState) => {
             keyPressTimer = setTimeout(function () {
                 longPress = true;
                 clearInterval(pomodoroTimer)
@@ -18,7 +18,7 @@
             }, LONG_PRESS_MS);
         },
 
-        onKeyUp: function(send, context, coordinates, userDesiredState) {
+        onKeyUp: (send, context, coordinates, userDesiredState) => {
             clearTimeout(keyPressTimer);
             keyPressTimer = null;
 
@@ -30,7 +30,7 @@
             _togglePomodoroTimer(send, context)
         },
 
-        onWillAppear: function(send, context, coordinates) {
+        onWillAppear: (send, context, coordinates) => {
             _setPomodoroSeconds(send, context, POMODORO_INITIAL_SECONDS)
         },
     }
@@ -90,7 +90,6 @@
     }
 
     window.pomodoroOnMessage = function(send, event) {
-        console.log("message", event)
         if (event["event"] === EVENT_KEY_DOWN) {
             settings = event["payload"]["settings"]
             actions.onKeyDown(
