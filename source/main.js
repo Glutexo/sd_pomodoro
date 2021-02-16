@@ -9,7 +9,7 @@
     const EVENT_WILL_APPEAR = "willAppear"
 
     const actions = {
-        onKeyDown: function(webSocket, context, coordinates, userDesiredState) {
+        onKeyDown: function(context, coordinates, userDesiredState) {
             keyPressTimer = setTimeout(function () {
                 longPress = true;
                 clearInterval(pomodoroTimer)
@@ -18,7 +18,7 @@
             }, LONG_PRESS_MS);
         },
 
-        onKeyUp: function(webSocket, context, coordinates, userDesiredState) {
+        onKeyUp: function(send, context, coordinates, userDesiredState) {
             clearTimeout(keyPressTimer);
             keyPressTimer = null;
 
@@ -27,11 +27,11 @@
                 return
             }
 
-            _togglePomodoroTimer(webSocket, context)
+            _togglePomodoroTimer(send, context)
         },
 
-        onWillAppear: function(webSocket, context, coordinates) {
-            _setPomodoroSeconds(webSocket, context, POMODORO_INITIAL_SECONDS)
+        onWillAppear: function(send, context, coordinates) {
+            _setPomodoroSeconds(send, context, POMODORO_INITIAL_SECONDS)
         },
     }
 
@@ -41,13 +41,13 @@
     let pomodoroTimer = null;
     let settings = null;
 
-    function _pomodoroTick(webSocket, context) {
-        _setPomodoroSeconds(webSocket, context, settings["pomodoroSeconds"] - 1)
+    function _pomodoroTick(send, context) {
+        _setPomodoroSeconds(send, context, settings["pomodoroSeconds"] - 1)
     }
 
-    function _togglePomodoroTimer(webSocket, context) {
+    function _togglePomodoroTimer(send, context) {
         function __pomodoroTick() {
-            _pomodoroTick(webSocket, context);
+            _pomodoroTick(send, context);
         }
 
         if (pomodoroTimer) {
@@ -58,43 +58,42 @@
         }
     }
 
-    function _setPomodoroSeconds(webSocket, context, pomodoroSeconds) {
+    function _setPomodoroSeconds(send, context, pomodoroSeconds) {
         if (settings == null) {
             settings = {}
         }
         settings["pomodoroSeconds"] = pomodoroSeconds
-        _setSettings(webSocket, context, settings);
-        _setTitle(webSocket, context, pomodoroSeconds);
+        _setSettings(send, context, settings);
+        _setTitle(send, context, pomodoroSeconds);
     }
 
-    function _setSettings(webSocket, context, settings) {
-        _sendEvent(webSocket, "setSettings", context, settings)
+    function _setSettings(send, context, settings) {
+        _sendEvent(send, "setSettings", context, settings)
     }
 
-    function _setTitle(webSocket, context, title) {
+    function _setTitle(send, context, title) {
         const payload = {
             "title": "" + title,
             "target": TARGET_HARDWARE_AND_SOFTWARE
         }
-        _sendEvent(webSocket, "setTitle", context, payload)
+        _sendEvent(send, "setTitle", context, payload)
     }
 
 
-    function _sendEvent(webSocket, event, context, payload) {
+    function _sendEvent(send, event, context, payload) {
         const data = {
             "event": event,
             "context": context,
             "payload": payload
         };
-        const json = JSON.stringify(data)
-        webSocket.send(json);
+        send(data);
     }
 
-    window.pomodoroOnMessage = function(webSocket, event) {
+    window.pomodoroOnMessage = function(send, event) {
+        console.log("message", event)
         if (event["event"] === EVENT_KEY_DOWN) {
             settings = event["payload"]["settings"]
             actions.onKeyDown(
-                webSocket,
                 event["context"],
                 event["payload"]["coordinates"],
                 event["payload"]["userDesiredState"],
@@ -102,7 +101,7 @@
         } else if (event["event"] === EVENT_KEY_UP) {
             settings = event["payload"]["settings"]
             actions.onKeyUp(
-                webSocket,
+                send,
                 event["context"],
                 event["payload"]["coordinates"],
                 event["payload"]["userDesiredState"],
@@ -110,7 +109,7 @@
         } else if (event["event"] === EVENT_WILL_APPEAR) {
             settings = event["payload"]["settings"]
             actions.onWillAppear(
-                webSocket,
+                send,
                 event["context"],
                 event["payload"]["coordinates"],
             );
