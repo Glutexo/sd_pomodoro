@@ -1,6 +1,6 @@
 (function() {
-    function connectWebSocket(inPort) {
-        const webSocket = new WebSocket("ws://127.0.0.1:" + inPort);
+    function connectWebSocket(port) {
+        const webSocket = new WebSocket(`ws://127.0.0.1:${port}`);
 
         function send(data) {
             const json = JSON.stringify(data);
