@@ -1,28 +1,31 @@
+BUILD_DIR = build
+
+.PHONY: all
 all: meta/manifest.json locales/en.json resources/icon.svg source/main.html source/main.js source/web_socket.js
 
 .PHONY: build
 build:
-	mkdir -p build
+	mkdir -p $(BUILD_DIR)
+
+.PHONY: clean
+clean:
+	rm $(BUILD_DIR)/*
 
 locales/en.json: build
-	cp locales/en.json build/en.json
+	cp $@ $(BUILD_DIR)/en.json
 
 meta/manifest.json: build
-	cp meta/manifest.json build/manifest.json
+	cp $@ $(BUILD_DIR)/manifest.json
 
 resources/icon.svg: build
-	convert resources/icon.svg -resize 72x72 build/icon.png
-	convert resources/icon.svg -resize 144x144 build/icon@2x.png
+	convert $@ -resize 72x72 $(BUILD_DIR)/icon.png
+	convert $@ -resize 144x144 $(BUILD_DIR)/icon@2x.png
 
 source/main.html: build
-	cp source/main.html build/main.html
+	cp $@ $(BUILD_DIR)/main.html
 
 source/main.js: build
-	cp source/main.js build/main.js
+	cp $@ $(BUILD_DIR)/main.js
 
 source/web_socket.js: build
-	cp source/web_socket.js build/web_socket.js
-
-clean:
-	rm build/icon.png
-	rm build/icon@2x.png
+	cp $@ $(BUILD_DIR)/web_socket.js
