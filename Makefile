@@ -10,29 +10,32 @@ build:
 
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR)/*
+	rm "$(BUILD_DIR)"/*
 
 .PHONY: dist
 dist: all
 	mkdir -p "$(DIST_DIR)"
 	cp "$(BUILD_DIR)"/* "$(DIST_DIR)"
 
+.PHONY: link
+link: all
+	ln -s "$(abspath $(BUILD_DIR))" "$(DIST_DIR)"
 
 locales/en.json: build
-	cp $@ $(BUILD_DIR)/en.json
+	cp "$@" "$(BUILD_DIR)"/en.json
 
 meta/manifest.json: build
-	cp $@ $(BUILD_DIR)/manifest.json
+	cp "$@" "$(BUILD_DIR)"/manifest.json
 
 resources/icon.svg: build
-	convert $@ -resize 72x72 $(BUILD_DIR)/icon.png
-	convert $@ -resize 144x144 $(BUILD_DIR)/icon@2x.png
+	convert "$@" -resize 72x72 "$(BUILD_DIR)"/icon.png
+	convert "$@" -resize 144x144 "$(BUILD_DIR)"/icon@2x.png
 
 source/main.html: build
-	cp $@ $(BUILD_DIR)/main.html
+	cp "$@" "$(BUILD_DIR)"/main.html
 
 source/main.js: build
-	cp $@ $(BUILD_DIR)/main.js
+	cp "$@" "$(BUILD_DIR)"/main.js
 
 source/web_socket.js: build
-	cp $@ $(BUILD_DIR)/web_socket.js
+	cp "$@" "$(BUILD_DIR)"/web_socket.js
