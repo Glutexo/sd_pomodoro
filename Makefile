@@ -1,15 +1,22 @@
 BUILD_DIR = build
+DIST_DIR = $(HOME)/Library/Application Support/com.elgato.StreamDeck/Plugins/com.Glutexo.Pomodoro.sdPlugin
 
 .PHONY: all
 all: meta/manifest.json locales/en.json resources/icon.svg source/main.html source/main.js source/web_socket.js
 
 .PHONY: build
 build:
-	mkdir -p $(BUILD_DIR)
+	mkdir -p "$(BUILD_DIR)"
 
 .PHONY: clean
 clean:
 	rm $(BUILD_DIR)/*
+
+.PHONY: dist
+dist: all
+	mkdir -p "$(DIST_DIR)"
+	cp "$(BUILD_DIR)"/* "$(DIST_DIR)"
+
 
 locales/en.json: build
 	cp $@ $(BUILD_DIR)/en.json
