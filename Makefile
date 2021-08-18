@@ -24,6 +24,10 @@ dist: build
 link: build
 	ln -s "$(abspath $(BUILD_DIR))" "$(DIST_DIR)"
 
+.PHONY: rmdist
+rmdist:
+	rm -rf "$(DIST_DIR)"
+
 $(BUILD_DIR)/en.json: $(LOCALES_DIR)/en.json
 	$(mkdir)
 	cp "$?" "$@"
