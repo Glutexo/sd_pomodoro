@@ -75,12 +75,7 @@
 
     window.pomodoroOnMessage = function(webSocketSendEvent, event) {
         function sendEvent(eventType, payload) {
-            const data = {
-                "context": event["context"],
-                "event": eventType,
-                "payload": payload
-            };
-            webSocketSendEvent(data);
+            webSocketSendEvent(event["context"], eventType, payload);
         }
 
         const eventType = event["event"],

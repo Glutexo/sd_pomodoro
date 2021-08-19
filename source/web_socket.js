@@ -14,8 +14,17 @@
             },
             bindMessage: (onMessage) => {
                 webSocket.onmessage = (event) => {
+                    function sendEvent(context, eventType, payload) {
+                        const data = {
+                            "context": context,
+                            "event": eventType,
+                            "payload": payload
+                        };
+                        send(data);
+                    }
+
                     const eventData = JSON.parse(event.data);
-                    onMessage(send, eventData)
+                    onMessage(sendEvent, eventData)
                 };
             }
         };
