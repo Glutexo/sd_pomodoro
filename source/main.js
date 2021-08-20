@@ -1,5 +1,4 @@
 (function() {
-    const TARGET_HARDWARE_AND_SOFTWARE = 0;
     const LONG_PRESS_MS = 500;
     const POMODORO_TICK_MS = 1000;
     const POMODORO_INITIAL_SECONDS = 60;
@@ -56,29 +55,17 @@
     }
 
     function _setPomodoroSeconds(sendEvent, pomodoroSeconds) {
-        settings = {"pomodoroSeconds": pomodoroSeconds}
-        _setSettings(sendEvent, settings);
-        _setTitle(sendEvent, pomodoroSeconds);
+        settings = {"pomodoroSeconds": pomodoroSeconds};
+        sendEvent(window.streamDeckEvents.setSettings, settings)
+        sendEvent(window.streamDeckEvents.setTitle, pomodoroSeconds)
     }
 
-    function _setSettings(sendEvent, settings) {
-        sendEvent("setSettings", settings)
-    }
-
-    function _setTitle(sendEvent, title) {
-        const payload = {
-            "title": `${title}`,
-            "target": TARGET_HARDWARE_AND_SOFTWARE
-        }
-        sendEvent("setTitle", payload)
-    }
-
-    window.pomodoroOnMessage = function(webSocketSendEvent, event) {
-        function sendEvent(eventType, payload) {
-            webSocketSendEvent(event["context"], eventType, payload);
+    window.pomodoroOnMessage = function(webSocketSendEvent, onMessageEvent) {
+        function sendEvent(eventFunc, ...args) {
+            webSocketSendEvent(onMessageEvent["context"], eventFunc, ...args);
         }
 
-        const eventType = event["event"],
+        const eventType = onMessageEvent["event"],
             action = actions[eventType];
         if (action) {
             action(sendEvent);

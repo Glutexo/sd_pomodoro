@@ -16,8 +16,8 @@
             },
             bindMessage: (onMessage) => {
                 webSocket.onmessage = (event) => {
-                    function sendEvent(context, eventType, payload) {
-                        const event = window.streamDeckEvents.event(context, eventType, payload)
+                    function sendEvent(context, eventFunc, ...args) {
+                        const event = eventFunc(context, ...args)
                         send(event);
                     }
 
