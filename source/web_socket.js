@@ -8,19 +8,17 @@
         }
 
         return {
-            bindOpen: (event, pluginUUID) => {
-                const payload = {"event": event, "uuid": pluginUUID}
-                webSocket.onopen = () => { send(payload); };
+            bindOpen: (eventType, pluginUUID) => {
+                webSocket.onopen = () => {
+                    const event = window.streamDeckEvents.open(eventType, pluginUUID)
+                    send(event);
+                };
             },
             bindMessage: (onMessage) => {
                 webSocket.onmessage = (event) => {
                     function sendEvent(context, eventType, payload) {
-                        const data = {
-                            "context": context,
-                            "event": eventType,
-                            "payload": payload
-                        };
-                        send(data);
+                        const event = window.streamDeckEvents.event(context, eventType, payload)
+                        send(event);
                     }
 
                     const eventData = JSON.parse(event.data);
@@ -31,7 +29,7 @@
     }
 
     window.registerStreamDeck = function(onMessage) {
-        window.connectElgatoStreamDeckSocket = (port, pluginUUID, event, info) => {
+        return (port, pluginUUID, event, _info) => {
             const webSocket = connectWebSocket(port)
             webSocket.bindOpen(event, pluginUUID)
             webSocket.bindMessage(onMessage)

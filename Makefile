@@ -9,7 +9,7 @@ mkdir = mkdir -p "$(@D)"
 
 .PHONY: build
 build: $(BUILD_DIR)/en.json $(BUILD_DIR)/manifest.json $(BUILD_DIR)/icon.png $(BUILD_DIR)/icon@2x.png\
-	$(BUILD_DIR)/main.html $(BUILD_DIR)/main.js $(BUILD_DIR)/web_socket.js
+	$(BUILD_DIR)/events.js $(BUILD_DIR)/main.html $(BUILD_DIR)/main.js $(BUILD_DIR)/web_socket.js
 
 .PHONY: clean
 clean:
@@ -43,6 +43,10 @@ $(BUILD_DIR)/icon.png: $(RESOURCES_DIR)/icon.svg
 $(BUILD_DIR)/icon@2x.png: $(RESOURCES_DIR)/icon.svg
 	$(mkdir)
 	convert "$?" -resize 144x144 "$@"
+
+$(BUILD_DIR)/events.js: $(SOURCE_DIR)/events.js
+	$(mkdir)
+	cp "$?" "$@"
 
 $(BUILD_DIR)/main.html: $(SOURCE_DIR)/main.html
 	$(mkdir)
