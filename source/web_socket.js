@@ -3,6 +3,7 @@
         const webSocket = new WebSocket(`ws://127.0.0.1:${port}`);
 
         function send(data) {
+            console.debug("WebSocket send", data)
             const json = JSON.stringify(data);
             webSocket.send(json);
         }
@@ -22,6 +23,7 @@
                     }
 
                     const eventData = JSON.parse(event.data);
+                    console.debug("WebSocket receive", eventData)
                     onMessage(sendEvent, eventData)
                 };
             }
