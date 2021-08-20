@@ -1,7 +1,7 @@
 (function() {
     const LONG_PRESS_MS = 500;
     const POMODORO_TICK_MS = 1000;
-    const POMODORO_INITIAL_SECONDS = 60;
+    const POMODORO_INITIAL_SECONDS = 25 * 60;
 
     const EVENT_KEY_DOWN = "keyDown";
     const EVENT_KEY_UP = "keyUp";
@@ -54,10 +54,17 @@
         }
     }
 
+    function _formatPomodoroSeconds(seconds) {
+        const minutes = Math.floor(seconds / 60),
+            remainingSeconds = seconds % 60,
+            formattedSeconds = String(remainingSeconds).padStart(2, "0");
+        return `${minutes}:${formattedSeconds}`;
+    }
+
     function _setPomodoroSeconds(sendEvent, pomodoroSeconds) {
-        settings = {"pomodoroSeconds": pomodoroSeconds};
+        settings = {"pomodoroSeconds": pomodoroSeconds};  // Global to keep local state.
         sendEvent(window.streamDeckEvents.setSettings, settings)
-        sendEvent(window.streamDeckEvents.setTitle, pomodoroSeconds)
+        sendEvent(window.streamDeckEvents.setTitle, _formatPomodoroSeconds(pomodoroSeconds))
     }
 
     window.pomodoroOnMessage = function(webSocketSendEvent, onMessageEvent) {
